@@ -22,13 +22,15 @@ public class Server{
                 thread.start();
             }
         }catch (IOException e){
-
+            closeServerSocket();
         }
     }
+
 
     public void closeServerSocket(){
         try{
             if(serverSocket != null){
+                System.out.println("Closing server");
                 serverSocket.close();
             }
         }catch(IOException e){
