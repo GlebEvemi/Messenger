@@ -1,7 +1,6 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.Buffer;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Scanner;
@@ -69,6 +68,7 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             SimpleDateFormat sdf3 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+            scanner.close();
             while (socket.isConnected()){
                 String messageToSend = scanner.nextLine();
                 bufferedWriter.write(sdf3.format(timestamp)+ "\t" +username + ": " + messageToSend);
@@ -124,6 +124,7 @@ public class Client {
         System.out.println("Enter the port");
         int port = scanner.nextInt();
         Client client = new Client(port, username);
+        scanner.close();
         client.listenForMessage();
         client.sendMessage();
     }
