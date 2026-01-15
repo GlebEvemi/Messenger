@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Scanner;
+import javax.swing.*;
 
 public class Client {
 
@@ -117,7 +118,7 @@ public class Client {
     }
 
     public static void main(String[] args) throws IOException{
-
+        new MyFrame("Client");
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter your username for the group chat: ");
         String username = scanner.nextLine();
