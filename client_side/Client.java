@@ -1,10 +1,11 @@
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Scanner;
-import javax.swing.*;
+
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 public class Client {
 
@@ -13,6 +14,7 @@ public class Client {
     private BufferedWriter bufferedWriter;
     private String username;
     private int port;
+    private MessageListener messageListener;
 
     public Client(int port, String username){
         this.port = port;
@@ -21,16 +23,13 @@ public class Client {
         try{
             connectToServer();
         }catch (IOException e){
-            System.out.println("Failed to connect to port: " + port +". Maybe port is available. Creating a new chat.");
-            try{
-                startServerOnPort(port);
-                connectToServer();
-            }catch (IOException y){
-                System.out.println("Failed to create a server");
-                y.printStackTrace();
-            }
+    JOptionPane.showMessageDialog(null,"Failed to connect to port");
 
-        }
+    new Timer(1, ex -> System.exit(1)).start();
+}
+
+
+        
     }
 
     private void connectToServer() throws IOException {
@@ -42,45 +41,28 @@ public class Client {
         bufferedWriter.flush();
     }
 
-    private void startServerOnPort(int port){
-        try{
-            ServerSocket serverSocket = new ServerSocket(port);
-            Server server = new Server(serverSocket);
-            System.out.println("New chat created on port " + port);
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    server.startServer();
-                }
-            }).start();
-        }catch (IOException e){
-            System.out.println("Failed to create server on port " + port);
-            e.printStackTrace();
-        }
+
+    public void setMessageListener(MessageListener listener) {
+    this.messageListener = listener;
+}   
+
+
+
+    public void sendMessage(String message) {
+    try {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+        bufferedWriter.write(
+            sdf.format(timestamp) + "\t" + username + ": " + message
+        );
+        bufferedWriter.newLine();
+        bufferedWriter.flush();
+    } catch (IOException e) {
+        closeEverything(socket, bufferedReader, bufferedWriter);
     }
+}
 
-
-    public void sendMessage(){
-        try{
-
-            bufferedWriter.newLine();
-            bufferedWriter.flush();
-
-            Scanner scanner = new Scanner(System.in);
-            SimpleDateFormat sdf3 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            scanner.close();
-            while (socket.isConnected()){
-                String messageToSend = scanner.nextLine();
-                bufferedWriter.write(sdf3.format(timestamp)+ "\t" +username + ": " + messageToSend);
-                bufferedWriter.newLine();
-                bufferedWriter.flush();
-            }
-        }catch(IOException e){
-            closeEverything(socket, bufferedReader, bufferedWriter);
-            System.out.println("Connection lost");
-        }
-    }
 
     public void listenForMessage(){
         new Thread(new Runnable() {
@@ -91,7 +73,9 @@ public class Client {
                 while(socket.isConnected()){
                     try{
                         msgFromGroupChat = bufferedReader.readLine();
-                        System.out.println(msgFromGroupChat);
+                            if (messageListener != null) {
+                                messageListener.onMessage(msgFromGroupChat);
+                            }                           
                     }catch (IOException e){
                         closeEverything(socket, bufferedReader, bufferedWriter);
                     }
@@ -117,16 +101,20 @@ public class Client {
         }
     }
 
-    public static void main(String[] args) throws IOException{
-        new MyFrame("Client");
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter your username for the group chat: ");
-        String username = scanner.nextLine();
-        System.out.println("Enter the port");
-        int port = scanner.nextInt();
-        Client client = new Client(port, username);
-        scanner.close();
-        client.listenForMessage();
-        client.sendMessage();
-    }
+    
+    
+
+    public static void main(String[] args) {
+    String username = JOptionPane.showInputDialog("Enter username:");
+    String portStr = JOptionPane.showInputDialog("Enter port:");
+
+    int port = Integer.parseInt(portStr);
+
+    Client client = new Client(port, username);
+
+    SwingUtilities.invokeLater(() -> {
+        new ChatFrame(client);
+    });
+}
+
 }
